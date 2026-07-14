@@ -1,0 +1,32 @@
+services:
+  autoscan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoscan:latest
+    container_name: autoscan-prod
+    restart: unless-stopped
+    # Modern GPU reservation (Docker Compose v2.3+ / Engine 19.03+ with
+    # nvidia-container-toolkit installed). If your setup is older and this
+    # isn't picked up, replace it with the top-level key `runtime: nvidia`
+    # instead.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    command:
+      - python3.11
+      - -m
+      - app.main
+      - --config
+      - /app/config/config.yaml
+      - --db
+      - /app/data/events.sqlite3
+      - --snapshots
+      - /app/data/snapshots

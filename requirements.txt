@@ -1,0 +1,4 @@
+opencv-python-headless>=4.9,<5
+nomeroff-net @ git+https://github.com/ria-com/nomeroff-net.git@v4.0.0
+pyyaml>=6,<7
+requests>=2.31,<3
