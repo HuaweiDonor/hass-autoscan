@@ -113,6 +113,31 @@ both trees at once; test each with `(cd worker && pytest tests/)` and
   persistent session so the broker queues detections while either side is
   briefly offline.
 
+## Live control from Home Assistant
+
+The worker also publishes [MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
+entities (enabled by default, `ha_discovery_enabled: true`) so two things
+can be changed live, from the HA UI, without restarting anything:
+
+- A **text** entity ("RTSP URL") — changing it makes the worker
+  immediately reconnect to the new stream.
+- Four **number** entities ("ROI x_min/y_min/x_max/y_max") — the
+  recognition area, as fractions (0–1) of the frame. Only this rectangle
+  is cropped out and fed to Nomeroff-Net, so pointing it at just your gate
+  lane both improves accuracy (ignores irrelevant traffic/pedestrians) and
+  speeds up detection. Defaults to the full frame (`0,0,1,1`).
+
+These entities appear automatically in HA once the worker connects to the
+same broker HA uses for discovery (`ha_discovery_prefix`, default
+`homeassistant`). HA publishes value changes with `retain: true`, so if
+the worker restarts, resubscribing immediately recovers the last values
+you set in HA — no separate persistence needed on the worker side.
+
+`--debug` mode still applies the ROI from `config.yaml` (useful for
+visually checking your crop via the saved snapshots before going live),
+but since it never connects to MQTT, it can't be adjusted live — only the
+static config value applies there.
+
 ## ⚠️ Required security setup: broker ACLs
 
 MQTT username/password alone is **not sufficient** once detections cross a
@@ -120,19 +145,31 @@ network boundary — anyone who can publish to the detections topic can
 forge a message with a guessed whitelisted plate and a high confidence
 value, bypassing the camera entirely and opening the gate.
 
-**You must configure broker-side ACLs** restricting the topic: the
+**You must configure broker-side ACLs** restricting the topics: the
 worker's credentials should only be allowed to **publish** to
 `mqtt_topic`, and the client's credentials should only be allowed to
-**subscribe** to it. For Mosquitto, this means an
+**subscribe** to it. The worker additionally needs read/write on its own
+control-topic tree (`autoscan/<mqtt_client_id>/...`) and write access to
+the HA discovery prefix (`<ha_discovery_prefix>/#`) if discovery is
+enabled — but nothing else should be able to publish to either, since
+anyone who could would be able to redirect the worker's camera or
+recognition area. For Mosquitto, this means an
 [ACL file](https://mosquitto.org/man/mosquitto-conf-5.html) like:
 
 ```
 user autoscan-worker
 topic write autoscan/plates/detections
+topic readwrite autoscan/autoscan-worker/#
+topic write homeassistant/#
 
 user autoscan-client
 topic read autoscan/plates/detections
 ```
+
+(Home Assistant's own MQTT integration user also needs to reach
+`autoscan/<mqtt_client_id>/+/set` to send commands and
+`<ha_discovery_prefix>/#` to receive discovery — this is normally already
+covered by HA's built-in Mosquitto add-on user having full broker access.)
 
 TLS is not set up in this project — credentials and payloads travel in
 plaintext on your LAN. That's an accepted tradeoff for a trusted home
@@ -152,6 +189,9 @@ broker isn't on a fully trusted network.
 | `mqtt_username` / `mqtt_password` | no | `null` | MQTT credentials (publish-only ACL) |
 | `mqtt_topic` | no | `autoscan/plates/detections` | Must match the client's topic |
 | `mqtt_client_id` | no | `autoscan-worker` | Fixed ID for persistent-session queuing |
+| `roi_x_min` / `roi_y_min` / `roi_x_max` / `roi_y_max` | no | `0.0`/`0.0`/`1.0`/`1.0` | Recognition area, as fractions of frame size; live-adjustable from HA once discovery is on |
+| `ha_discovery_enabled` | no | `true` | Publishes the HA MQTT Discovery entities described above |
+| `ha_discovery_prefix` | no | `homeassistant` | Must match your HA MQTT integration's discovery prefix |
 
 ### Client (`client/config/config.example.yaml` → `config.yaml`)
 
@@ -254,6 +294,7 @@ parse → whitelist → dry-run HA call → SQLite/snapshot path works.
   namespacing yet.
 - Whitelist is a static list in `client/config.yaml`; no hot-reload or
   HA-managed list yet.
+- The ROI is a single rectangle, not an arbitrary polygon/mask.
 - No TLS on the MQTT connection (see security section).
 - `NomeroffANPR`'s parsing of the pipeline output is based on
   Nomeroff-Net's documented API and hasn't been validated against a live

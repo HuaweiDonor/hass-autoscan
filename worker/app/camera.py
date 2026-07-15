@@ -1,3 +1,4 @@
+import threading
 import time
 from typing import Callable, Iterator
 
@@ -25,6 +26,15 @@ class FrameReader:
         self._initial_backoff = initial_backoff_seconds
         self._max_backoff = max_backoff_seconds
         self._sleep = sleep
+        self._reconnect_requested = threading.Event()
+
+    def request_reconnect(self) -> None:
+        """Force the next loop iteration to drop the current capture and
+        reconnect, even if it's still reading successfully. Safe to call
+        from another thread (e.g. an MQTT callback delivering a new
+        RTSP URL).
+        """
+        self._reconnect_requested.set()
 
     def frames(self) -> Iterator:
         backoff = self._initial_backoff
@@ -38,6 +48,12 @@ class FrameReader:
                     self._sleep(backoff)
                     backoff = min(backoff * 2, self._max_backoff)
                     continue
+
+            if self._reconnect_requested.is_set():
+                self._reconnect_requested.clear()
+                capture.release()
+                capture = None
+                continue
 
             ret, frame = capture.read()
             if not ret:

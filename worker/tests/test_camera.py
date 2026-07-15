@@ -118,6 +118,22 @@ def test_backoff_resets_after_successful_read():
     assert backoff_sleeps == [1, 1]
 
 
+def test_reconnects_immediately_when_requested_even_if_read_would_succeed():
+    capture1 = FakeCapture(opened=True, reads=[(True, "frame1"), (True, "frame1b")])
+    capture2 = FakeCapture(opened=True, reads=[(True, "frame2")])
+    reader = FrameReader(
+        capture_factory=make_factory(capture1, capture2),
+        sample_fps=10,
+        sleep=lambda s: None,
+    )
+
+    gen = reader.frames()
+    assert next(gen) == "frame1"
+    reader.request_reconnect()
+    assert next(gen) == "frame2"
+    assert capture1.released is True
+
+
 def test_throttles_between_frames_at_sample_fps():
     capture = FakeCapture(opened=True, reads=[(True, "frame1"), (True, "frame2")])
     sleeps = []

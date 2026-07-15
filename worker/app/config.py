@@ -14,6 +14,12 @@ _DEFAULTS = {
     "mqtt_password": None,
     "mqtt_topic": "autoscan/plates/detections",
     "mqtt_client_id": "autoscan-worker",
+    "roi_x_min": 0.0,
+    "roi_y_min": 0.0,
+    "roi_x_max": 1.0,
+    "roi_y_max": 1.0,
+    "ha_discovery_enabled": True,
+    "ha_discovery_prefix": "homeassistant",
 }
 
 
@@ -31,6 +37,12 @@ class Config:
     mqtt_password: str
     mqtt_topic: str
     mqtt_client_id: str
+    roi_x_min: float
+    roi_y_min: float
+    roi_x_max: float
+    roi_y_max: float
+    ha_discovery_enabled: bool
+    ha_discovery_prefix: str
 
 
 def load_config(path: str) -> Config:
