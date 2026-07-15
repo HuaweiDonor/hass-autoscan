@@ -1,5 +1,16 @@
 # hass-autoscan
 
+**English** | [Русский](README.ru.md)
+
+[![Open your Home Assistant instance and start setting up the MQTT integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mqtt)
+
+autoscan isn't a Home Assistant custom integration — it's a standalone pair
+of Docker services that talk to HA over MQTT. The badge above just jumps to
+HA's MQTT integration setup, the one manual prerequisite on the HA side;
+once that's configured, the RTSP URL/ROI entities described below
+[register themselves automatically](#live-control-from-home-assistant) via
+MQTT Discovery — there's no separate "install" step for autoscan itself.
+
 CUDA-accelerated license-plate recognition for CCTV gate control, split into
 two independently-deployable services connected over MQTT — because the
 GPU machine and the Home Assistant host are typically two different
