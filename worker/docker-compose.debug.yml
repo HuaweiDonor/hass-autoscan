@@ -1,10 +1,10 @@
 services:
-  autoscan-debug:
+  autoscan-worker-debug:
     build:
       context: .
       dockerfile: Dockerfile
-    image: autoscan:latest
-    container_name: autoscan-debug
+    image: autoscan-worker:latest
+    container_name: autoscan-worker-debug
     # Modern GPU reservation (Docker Compose v2.3+ / Engine 19.03+ with
     # nvidia-container-toolkit installed). If your setup is older and this
     # isn't picked up, replace it with the top-level key `runtime: nvidia`

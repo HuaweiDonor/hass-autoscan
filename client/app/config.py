@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import yaml
 
-_REQUIRED_FIELDS = ["rtsp_url"]
+_REQUIRED_FIELDS = ["mqtt_broker_host"]
 
 _PRODUCTION_REQUIRED_FIELDS = [
     "ha_url",
@@ -13,6 +13,11 @@ _PRODUCTION_REQUIRED_FIELDS = [
 ]
 
 _DEFAULTS = {
+    "mqtt_broker_port": 1883,
+    "mqtt_username": None,
+    "mqtt_password": None,
+    "mqtt_topic": "autoscan/plates/detections",
+    "mqtt_client_id": "autoscan-client",
     "ha_url": None,
     "ha_token": None,
     "ha_domain": None,
@@ -20,7 +25,6 @@ _DEFAULTS = {
     "ha_entity_id": None,
     "cooldown_seconds": 60,
     "confidence_threshold": 0.85,
-    "sample_fps": 3,
     "dry_run": True,
 }
 
@@ -31,7 +35,12 @@ class ConfigError(Exception):
 
 @dataclass
 class Config:
-    rtsp_url: str
+    mqtt_broker_host: str
+    mqtt_broker_port: int
+    mqtt_username: str
+    mqtt_password: str
+    mqtt_topic: str
+    mqtt_client_id: str
     ha_url: str
     ha_token: str
     ha_domain: str
@@ -39,7 +48,6 @@ class Config:
     ha_entity_id: str
     cooldown_seconds: float
     confidence_threshold: float
-    sample_fps: float
     dry_run: bool
     allowed_plates: list = field(default_factory=list)
 

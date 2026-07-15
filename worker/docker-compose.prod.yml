@@ -1,10 +1,10 @@
 services:
-  autoscan:
+  autoscan-worker:
     build:
       context: .
       dockerfile: Dockerfile
-    image: autoscan:latest
-    container_name: autoscan-prod
+    image: autoscan-worker:latest
+    container_name: autoscan-worker-prod
     restart: unless-stopped
     # Modern GPU reservation (Docker Compose v2.3+ / Engine 19.03+ with
     # nvidia-container-toolkit installed). If your setup is older and this
@@ -26,7 +26,5 @@ services:
       - app.main
       - --config
       - /app/config/config.yaml
-      - --db
-      - /app/data/events.sqlite3
       - --snapshots
       - /app/data/snapshots

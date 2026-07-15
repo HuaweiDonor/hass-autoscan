@@ -1,0 +1,33 @@
+# Copy this file to config.yaml and fill in your own values.
+# config.yaml is gitignored so secrets don't get committed.
+#
+# This service needs a reachable MQTT broker (the same one your worker
+# publishes to) with a matching mqtt_topic, plus your Home Assistant
+# details. It has no GPU/camera dependency at all — meant to run on/near
+# your Home Assistant host.
+
+# Use credentials that are only allowed to SUBSCRIBE to mqtt_topic (see
+# broker ACL note in README) — this machine never needs to publish.
+mqtt_broker_host: mqtt.local
+mqtt_broker_port: 1883
+mqtt_username: autoscan-client
+mqtt_password: REPLACE_WITH_CLIENT_MQTT_PASSWORD
+mqtt_topic: autoscan/plates/detections
+mqtt_client_id: autoscan-client
+
+ha_url: http://homeassistant.local:8123
+ha_token: REPLACE_WITH_LONG_LIVED_ACCESS_TOKEN
+ha_domain: switch
+ha_service: turn_on
+ha_entity_id: switch.gate_relay
+
+allowed_plates:
+  - A123BC777
+  - K777XA777
+
+cooldown_seconds: 60
+confidence_threshold: 0.85
+
+# Keep true until you've verified detections/matches look correct in
+# data/events.sqlite3 and data/snapshots/ against your real camera.
+dry_run: true

@@ -1,0 +1,21 @@
+# Copy this file to config.yaml and fill in your own values.
+# config.yaml is gitignored so secrets don't get committed.
+#
+# For a local test of just the camera + plate recognition (no MQTT broker
+# needed yet), run with --debug: only rtsp_url below is required for that.
+#   python -m app.main --config config/config.yaml --debug
+
+rtsp_url: rtsp://user:password@192.168.1.50:554/stream1
+sample_fps: 3
+
+# MQTT broker this worker publishes detections to. Required for normal
+# (non-debug) operation. Point this at your existing broker (e.g. Home
+# Assistant's Mosquitto add-on) and use credentials that are only allowed
+# to PUBLISH to mqtt_topic (see broker ACL note in README) — never share
+# broad broker credentials with this machine.
+mqtt_broker_host: mqtt.local
+mqtt_broker_port: 1883
+mqtt_username: autoscan-worker
+mqtt_password: REPLACE_WITH_WORKER_MQTT_PASSWORD
+mqtt_topic: autoscan/plates/detections
+mqtt_client_id: autoscan-worker

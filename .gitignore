@@ -2,8 +2,12 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-data/events.sqlite3
-data/snapshots/*
-!data/snapshots/.gitkeep
-config/config.yaml
+worker/data/events.sqlite3
+worker/data/snapshots/*
+!worker/data/snapshots/.gitkeep
+worker/config/config.yaml
+client/data/events.sqlite3
+client/data/snapshots/*
+!client/data/snapshots/.gitkeep
+client/config/config.yaml
 .pytest_cache/

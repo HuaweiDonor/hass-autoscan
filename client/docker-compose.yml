@@ -1,0 +1,21 @@
+services:
+  autoscan-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoscan-client:latest
+    container_name: autoscan-client
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    command:
+      - python3
+      - -m
+      - app.main
+      - --config
+      - /app/config/config.yaml
+      - --db
+      - /app/data/events.sqlite3
+      - --snapshots
+      - /app/data/snapshots
