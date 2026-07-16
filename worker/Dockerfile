@@ -19,6 +19,14 @@ RUN python3.11 -m pip install --no-cache-dir \
 COPY requirements.txt .
 RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 
+# nomeroff-net's v4.0.0 release is missing __init__.py in this subpackage
+# (an upstream packaging bug: https://github.com/ria-com/nomeroff-net/issues/315
+# family of issues). Whether setuptools/pip includes it anyway is
+# non-deterministic (depends on git clone completeness at install time),
+# so guarantee it exists rather than rely on luck.
+RUN NOMEROFF_DIR=$(python3.11 -c "import nomeroff_net, os; print(os.path.dirname(nomeroff_net.__file__))") \
+    && touch "$NOMEROFF_DIR/pipes/number_plate_keypoints_detectors/__init__.py"
+
 COPY app/ ./app/
 COPY config/config.example.yaml ./config/config.example.yaml
 
