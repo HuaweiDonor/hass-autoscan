@@ -20,6 +20,10 @@ services:
     volumes:
       - ./config:/app/config:ro
       - ./data:/app/data
+      # Pre-download models elsewhere and copy them here if models.vsp.net.ua
+      # isn't reachable from this machine (see README) -- avoids needing
+      # network access to it at all.
+      - ./models:/app/models
     command:
       - python3.11
       - -m

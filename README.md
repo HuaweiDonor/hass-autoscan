@@ -299,6 +299,33 @@ throwaway local broker (`docker run -p 1883:1883 eclipse-mosquitto`) and
 publish a canned detection through `MQTTPublisher` to confirm the full
 parse → whitelist → dry-run HA call → SQLite/snapshot path works.
 
+## If models.vsp.net.ua isn't reachable from your worker machine
+
+Nomeroff-Net downloads its pretrained model weights from
+`models.vsp.net.ua` (hardcoded into the library, not configurable to a
+mirror — see [ria-com/nomeroff-net#315](https://github.com/ria-com/nomeroff-net/issues/315),
+a widely-reported issue with that host). If your worker machine can't
+reach it (blocked, filtered, or just flaky), pre-download the models
+somewhere that can and copy them over — `worker/models/` is a bind-mounted
+volume (`LOCAL_STORAGE=/app/models` in the container) exactly for this:
+
+```bash
+# On a machine that CAN reach models.vsp.net.ua:
+cd worker
+docker compose -f docker-compose.debug.yml build
+mkdir -p models
+docker compose -f docker-compose.debug.yml run --rm \
+  -v "$(pwd)/models:/app/models" autoscan-worker-debug --debug
+# ^ let it run long enough to finish downloading (Ctrl-C once you see it
+#   start reading frames, or once GPU/network activity settles down),
+#   then copy worker/models/ to the same path on your actual worker machine
+#   (scp -r models/ user@worker-host:/opt/hass-autoscan/worker/) before
+#   starting the real container there.
+```
+
+Once `worker/models/` is populated, the container finds everything cached
+locally and never needs to reach `models.vsp.net.ua` again.
+
 ## Known limitations / next steps
 
 - Single camera, single gate, single MQTT topic — no multi-camera

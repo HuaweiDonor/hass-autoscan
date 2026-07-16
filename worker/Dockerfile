@@ -1,7 +1,8 @@
 FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    LOCAL_STORAGE=/app/models
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-venv python3.11-dev python3-pip \
@@ -21,6 +22,6 @@ RUN python3.11 -m pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY config/config.example.yaml ./config/config.example.yaml
 
-VOLUME ["/app/config", "/app/data"]
+VOLUME ["/app/config", "/app/data", "/app/models"]
 
 CMD ["python3.11", "-m", "app.main"]

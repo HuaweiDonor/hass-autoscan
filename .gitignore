@@ -6,6 +6,8 @@ worker/data/events.sqlite3
 worker/data/snapshots/*
 !worker/data/snapshots/.gitkeep
 worker/config/config.yaml
+worker/models/*
+!worker/models/.gitkeep
 client/data/events.sqlite3
 client/data/snapshots/*
 !client/data/snapshots/.gitkeep
