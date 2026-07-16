@@ -1,4 +1,5 @@
 opencv-python-headless>=4.9,<5
 nomeroff-net @ git+https://github.com/ria-com/nomeroff-net.git@v4.0.0
+modelhub-client
 pyyaml>=6,<7
 paho-mqtt>=2,<3
