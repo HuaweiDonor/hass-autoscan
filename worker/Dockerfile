@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-venv python3-pip \
-        ffmpeg libgl1 libglib2.0-0 git \
+        ffmpeg libgl1 libglib2.0-0 git build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
