@@ -79,12 +79,24 @@ def load_pipeline():
     """Builds the real Nomeroff-Net pipeline_fn for NomeroffANPR.
 
     Requires nomeroff-net and a CUDA-enabled torch install, and downloads
-    model weights on first run — only exercised on the GPU target machine,
-    not in this dev environment. Verify this against the installed
-    nomeroff-net version's actual output shape (see project plan, task:
-    validate anpr.py against real Nomeroff-Net on GPU machine) before
-    trusting NomeroffANPR._parse's assumptions in production.
+    model weights on first run.
+
+    Calling the real pipeline directly returns a list with one raw
+    per-image result tuple per input path -- e.g. for one path,
+    `[(images_1, bboxes_1, ..., texts_1)]`, a single-element list, not
+    the 9-element tuple-of-lists NomeroffANPR._parse expects. nomeroff-net's
+    own documented usage always wraps this in `unzip()` (= `zip(*result)`)
+    before use; do the same here so pipeline_fn's contract matches what
+    NomeroffANPR/_parse (and its tests) assume: a real 9-tuple of
+    per-field lists, not the raw per-image result list. Confirmed against
+    the installed nomeroff-net version on the GPU target machine.
     """
     from nomeroff_net import pipeline
+    from nomeroff_net.tools import unzip
 
-    return pipeline("number_plate_detection_and_reading", image_loader="opencv")
+    real_pipeline = pipeline("number_plate_detection_and_reading", image_loader="opencv")
+
+    def pipeline_fn(paths):
+        return unzip(real_pipeline(paths))
+
+    return pipeline_fn
