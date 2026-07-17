@@ -6,8 +6,10 @@
 # details. It has no GPU/camera dependency at all — meant to run on/near
 # your Home Assistant host.
 
-# Use credentials that are only allowed to SUBSCRIBE to mqtt_topic (see
-# broker ACL note in README) — this machine never needs to publish.
+# Use credentials that are only allowed to SUBSCRIBE to mqtt_topic and
+# PUBLISH under autoscan/<mqtt_client_id>/# and homeassistant/# (see broker
+# ACL note in README) — the latter is needed for the HA Discovery entities
+# below (last plate/time/snapshot), not for detections themselves.
 mqtt_broker_host: mqtt.local
 mqtt_broker_port: 1883
 mqtt_username: autoscan-client
@@ -31,3 +33,10 @@ confidence_threshold: 0.85
 # Keep true until you've verified detections/matches look correct in
 # data/events.sqlite3 and data/snapshots/ against your real camera.
 dry_run: true
+
+# When true (default), publishes every detection (time, plate, snapshot)
+# as Home Assistant MQTT Discovery entities (2 sensors + 1 camera) under
+# the "Autoscan Client" device, so the last scan is visible in the HA UI
+# without needing to read data/events.sqlite3 directly.
+ha_discovery_enabled: true
+ha_discovery_prefix: homeassistant

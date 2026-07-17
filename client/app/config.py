@@ -26,6 +26,8 @@ _DEFAULTS = {
     "cooldown_seconds": 60,
     "confidence_threshold": 0.85,
     "dry_run": True,
+    "ha_discovery_enabled": True,
+    "ha_discovery_prefix": "homeassistant",
 }
 
 
@@ -49,6 +51,8 @@ class Config:
     cooldown_seconds: float
     confidence_threshold: float
     dry_run: bool
+    ha_discovery_enabled: bool
+    ha_discovery_prefix: str
     allowed_plates: list = field(default_factory=list)
 
 

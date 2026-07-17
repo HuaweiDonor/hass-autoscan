@@ -5,6 +5,7 @@ from app.config import load_config, validate_for_production
 from app.cooldown import CooldownManager
 from app.eventlog import EventLogger
 from app.ha_client import HAClient
+from app.ha_discovery import HADiscovery
 from app.message import MessageParseError, parse_detection_payload
 from app.mqtt_subscriber import MQTTSubscriber
 from app.normalize import normalize_plate
@@ -43,6 +44,16 @@ def run(config_path: str, db_path: str, snapshots_dir: str) -> None:
     )
     event_logger = EventLogger(db_path=db_path, snapshots_dir=snapshots_dir)
 
+    mqtt_client = _build_mqtt_client(cfg)
+
+    ha_discovery = None
+    if cfg.ha_discovery_enabled:
+        ha_discovery = HADiscovery(
+            mqtt_client,
+            mqtt_client_id=cfg.mqtt_client_id,
+            discovery_prefix=cfg.ha_discovery_prefix,
+        )
+
     def handle_message(payload: bytes) -> None:
         try:
             msg = parse_detection_payload(payload)
@@ -76,11 +87,23 @@ def run(config_path: str, db_path: str, snapshots_dir: str) -> None:
             ha_call_result=ha_call_result,
         )
 
-    mqtt_client = _build_mqtt_client(cfg)
+        if ha_discovery:
+            ha_discovery.publish_detection(
+                ts=msg.ts,
+                plate_raw=msg.plate_raw,
+                plate_normalized=plate_normalized,
+                confidence=msg.confidence,
+                matched=matched,
+                snapshot_bytes=msg.snapshot_bytes,
+            )
+
     subscriber = MQTTSubscriber(mqtt_client, topic=cfg.mqtt_topic)
 
     logger.info("Starting autoscan client (dry_run=%s)", cfg.dry_run)
-    subscriber.run_forever(handle_message)
+    subscriber.run_forever(
+        handle_message,
+        on_connect=ha_discovery.publish_discovery if ha_discovery else None,
+    )
 
 
 def main():

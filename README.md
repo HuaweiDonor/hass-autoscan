@@ -149,6 +149,23 @@ visually checking your crop via the saved snapshots before going live),
 but since it never connects to MQTT, it can't be adjusted live — only the
 static config value applies there.
 
+## Detection visibility in Home Assistant
+
+The client also publishes [MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
+entities (enabled by default, `ha_discovery_enabled: true`) for the most
+recent detection, under an "Autoscan Client" device:
+
+- A **sensor** ("Last Scanned Plate") — the normalized plate text, with
+  the raw OCR text, confidence, and whitelist match result as extra
+  attributes.
+- A **sensor** ("Last Detection Time") — timestamp of the last detection.
+- A **camera** ("Last Plate Snapshot") — the cropped ROI snapshot from
+  that detection, so you can see what the camera actually saw.
+
+All three are retained, so they show the last known values in HA even
+across a client restart, and are republished on every reconnect in case
+the broker itself restarted without retained messages.
+
 ## ⚠️ Required security setup: broker ACLs
 
 MQTT username/password alone is **not sufficient** once detections cross a
@@ -159,12 +176,17 @@ value, bypassing the camera entirely and opening the gate.
 **You must configure broker-side ACLs** restricting the topics: the
 worker's credentials should only be allowed to **publish** to
 `mqtt_topic`, and the client's credentials should only be allowed to
-**subscribe** to it. The worker additionally needs read/write on its own
+**subscribe** to it — nothing else should be able to publish to
+`mqtt_topic`, since anyone who could would be able to forge a detection
+and open the gate. The worker additionally needs read/write on its own
 control-topic tree (`autoscan/<mqtt_client_id>/...`) and write access to
 the HA discovery prefix (`<ha_discovery_prefix>/#`) if discovery is
-enabled — but nothing else should be able to publish to either, since
-anyone who could would be able to redirect the worker's camera or
-recognition area. For Mosquitto, this means an
+enabled, for its live RTSP URL/ROI controls. The client similarly needs
+write access to its own topic tree (`autoscan/<mqtt_client_id>/...`) and
+the discovery prefix, for the last-plate/time/snapshot entities described
+above — this is lower-stakes than the worker's, since it only ever
+publishes read-only sensor state, never anything that controls the
+camera or gate. For Mosquitto, this means an
 [ACL file](https://mosquitto.org/man/mosquitto-conf-5.html) like:
 
 ```
@@ -175,6 +197,8 @@ topic write homeassistant/#
 
 user autoscan-client
 topic read autoscan/plates/detections
+topic readwrite autoscan/autoscan-client/#
+topic write homeassistant/#
 ```
 
 (Home Assistant's own MQTT integration user also needs to reach
@@ -217,6 +241,8 @@ broker isn't on a fully trusted network.
 | `cooldown_seconds` | no | `60` | Suppresses repeat gate triggers for the same plate |
 | `confidence_threshold` | no | `0.85` | Minimum OCR confidence to consider a match |
 | `dry_run` | no | `true` | If true, matches/logs normally but never calls Home Assistant |
+| `ha_discovery_enabled` | no | `true` | Publishes the last-plate/time/snapshot HA MQTT Discovery entities described above |
+| `ha_discovery_prefix` | no | `homeassistant` | Must match your HA MQTT integration's discovery prefix |
 
 Both `config.yaml` files are gitignored — they hold credentials, don't
 commit them.

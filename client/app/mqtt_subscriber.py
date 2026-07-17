@@ -12,9 +12,15 @@ class MQTTSubscriber:
         self._topic = topic
         self._qos = qos
 
-    def run_forever(self, on_message: Callable[[bytes], None]) -> None:
+    def run_forever(
+        self,
+        on_message: Callable[[bytes], None],
+        on_connect: Callable[[], None] | None = None,
+    ) -> None:
         def _on_connect(client, userdata, flags, rc, properties=None):
             client.subscribe(self._topic, qos=self._qos)
+            if on_connect:
+                on_connect()
 
         def _on_message(client, userdata, msg):
             on_message(msg.payload)

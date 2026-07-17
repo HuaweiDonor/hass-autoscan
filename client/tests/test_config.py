@@ -53,6 +53,8 @@ def test_applies_defaults_when_optional_fields_omitted(tmp_path):
     assert cfg.dry_run is True
     assert cfg.allowed_plates == []
     assert cfg.ha_url is None
+    assert cfg.ha_discovery_enabled is True
+    assert cfg.ha_discovery_prefix == "homeassistant"
 
 
 def test_raises_clear_error_when_mqtt_broker_host_missing(tmp_path):

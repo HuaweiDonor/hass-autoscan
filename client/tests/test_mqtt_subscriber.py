@@ -56,3 +56,21 @@ def test_respects_custom_qos():
     subscriber.run_forever(on_message=lambda payload: None)
 
     assert client.subscribed == [("t", 2)]
+
+
+def test_invokes_extra_on_connect_hook_after_subscribing():
+    client = FakeMQTTClient()
+    subscriber = MQTTSubscriber(client, topic="autoscan/plates/detections")
+    calls = []
+
+    subscriber.run_forever(on_message=lambda payload: None, on_connect=lambda: calls.append(True))
+
+    assert calls == [True]
+    assert client.subscribed == [("autoscan/plates/detections", 1)]
+
+
+def test_works_without_extra_on_connect_hook():
+    client = FakeMQTTClient()
+    subscriber = MQTTSubscriber(client, topic="t")
+
+    subscriber.run_forever(on_message=lambda payload: None)  # should not raise
